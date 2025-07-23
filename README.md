@@ -1,8 +1,33 @@
 # Billy's Encrypted File Server
 
 ## Architecture
-There are currently three components to the `befs`; `auth`, `file_server`, and `cli`.
- `auth` handles authentication, including storing authentication information, as well as giving out [macaroons](http://tech.tmh.io/concept/2016/06/07/macaroons-a-new-flavor-for-authorization.html). If you're a pentester, this is a juicy target ;). `file_server` handles uploading and downloading files for users, storing them, and (TODO) limiting the amount of storage each individual user can store. Because of the fact that files are supposed to be, well, e2e encrypted, the `cli` does a lot of heavy lifting. It deals with compressing and encrypting files (in that order!), as well as keeping information regarding how chunks should be strung together in order to be rebuilt. Oh about chunks, `bfsp` is the protocol library that glues all of this together. It deals with how exactly files should be split apart into chunks and put back together, as well as how exactly to speak with the authentication server. At the moment, all communication with the `file_server` is done over raw TCP (using `bfsp` for primitives), and all communication with `auth` is done over HTTP.
+
+Billy's Encrypted File Server (BEFS) is a modern, high-performance encrypted file storage system built in Rust with three main components:
+
+### Core Components
+- **`file_server`** (this repository) - The main storage engine handling file operations, chunk management, and user storage quotas
+- **`auth`** - Authentication service using [Biscuit tokens](https://www.biscuitsec.org/) for cryptographic authorization with fine-grained permissions
+- **`cli`** - Client-side application handling file encryption, compression, and chunk reconstruction
+
+### Communication Protocols
+- **WebTransport** (primary) - Modern, multiplexed protocol for efficient file operations
+- **HTTP API** - Compatibility layer for legacy clients and admin operations
+- **Internal TCP API** - Encrypted administrative interface for service management
+
+### Storage Architecture
+The system uses a chunk-based approach where files are split into chunks for efficient storage and transfer:
+- **Dual Storage Backend**: Local filesystem (development) and S3-compatible storage (production)
+- **PostgreSQL Metadata**: Encrypted file metadata and chunk information
+- **User Isolation**: All data strictly segregated by authenticated user ID
+
+### Security Features
+- **End-to-End Encryption**: Files encrypted client-side before transmission
+- **Cryptographic Authentication**: Biscuit tokens with embedded permissions
+- **Automated TLS**: Let's Encrypt certificate management with auto-renewal
+- **Storage Quotas**: Per-user storage limits with enforcement
+- **Token Revocation**: Real-time token invalidation system
+
+For detailed architectural information, see [ARCHITECTURE.md](ARCHITECTURE.md).
  
 # Dependencies
 I make heavy use of the [nix package manager](https://nixos.org/download). So if you want to work on the project, I recommend installing that. Alternatively, if you just want to run the server, you can use Docker.
